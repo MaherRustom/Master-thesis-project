@@ -83,11 +83,9 @@ rotation_chaser1(1)=atan2(2*( q_chaser1(1)*q_chaser1(2)+q_chaser1(3)*q_chaser1(4
 rotation_chaser1(2)=-pi/2+2*atan2(  sqrt(1+2*( q_chaser1(1)*q_chaser1(3)-q_chaser1(2)*q_chaser1(4)))   , sqrt(1-2*( q_chaser1(1)*q_chaser1(3)-q_chaser1(2)*q_chaser1(4)))   );
 rotation_chaser1(3)=atan2(2*( q_chaser1(1)*q_chaser1(4)+q_chaser1(2)*q_chaser1(3)),  1-2*(q_chaser1(3)^2+q_chaser1(4)^2));
 
+
+
 angular_rotation_chaser11=[0,0,0]; % [rad/s] [wx,wy,wz]
-%%3
-a_chaser11= (Altitude_chaser11+R_Earth)/(1-e_chaser11); % [m] semi major axis
-T_chaser11=2*pi*sqrt(a_chaser11^3/mu_Earth); %[s] orbirt period
-tspan=linspace(0,1*T_chaser11,1000);
 
 %% Functions 
 
@@ -100,5 +98,55 @@ r_norm_chaser1=norm(r_chaser11);
 acc_chaser11=-mu_Earth*r_chaser11/r_norm_chaser1^3;
 
 data_chaser11=[v_chaser11;acc_chaser11];
+
+end
+
+function q = eulerToQuat(roll, pitch, yaw)
+    % Converts roll, pitch, yaw to quaternion
+    % Rotation sequence: ZYX
+    % roll  = rotation about x-axis
+    % pitch = rotation about y-axis
+    % yaw   = rotation about z-axis
+    %
+    % Output format:
+    % q = [w x y z]
+
+    cr = cos(roll/2);
+    sr = sin(roll/2);
+
+    cp = cos(pitch/2);
+    sp = sin(pitch/2);
+
+    cy = cos(yaw/2);
+    sy = sin(yaw/2);
+
+    w = cr*cp*cy + sr*sp*sy;
+    x = sr*cp*cy - cr*sp*sy;
+    y = cr*sp*cy + sr*cp*sy;
+    z = cr*cp*sy - sr*sp*cy;
+
+    q = [w x y z];
+    q=q/norm(q);
+end
+
+
+function q = quat_multiply(a,b)
+
+    a0 = a(1); a1 = a(2); a2 = a(3); a3 = a(4);
+    b0 = b(1); b1 = b(2); b2 = b(3); b3 = b(4);
+
+    q = [
+        a0*b0 - a1*b1 - a2*b2 - a3*b3;
+        a0*b1 + a1*b0 + a2*b3 - a3*b2;
+        a0*b2 - a1*b3 + a2*b0 + a3*b1;
+        a0*b3 + a1*b2 - a2*b1 + a3*b0
+    ];
+
+end
+
+function q_inv = quat_inverse(q)
+
+    q_conj = [q(1); -q(2); -q(3); -q(4)];
+    q_inv = q_conj / dot(q,q);
 
 end
